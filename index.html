@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ata Cafe | Dijital Menü</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Tukendi Efekti (Sihirli Menu) */
+        .menu-card.tukendi {
+            opacity: 0.55;
+            pointer-events: none;
+            position: relative;
+            overflow: hidden;
+            filter: grayscale(80%);
+        }
+
+        .menu-card.tukendi::before {
+            content: 'TÜKENDİ';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-10deg);
+            background-color: #D9381E;
+            color: white;
+            font-family: var(--font-heading);
+            font-size: 1.4rem;
+            font-weight: bold;
+            padding: 5px 20px;
+            border: 3px solid white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            z-index: 10;
+            letter-spacing: 2px;
+        }
+
+        /* YENI: Alt Urun Tukendi Efekti (Orn: Oralet Kivi) */
+        .alt-urun.tukendi {
+            color: #aaa;
+            text-decoration: line-through;
+            font-weight: 400;
+        }
+
+        .alt-urun.tukendi::after {
+            content: ' (Tükendi)';
+            color: #D9381E; /* Kirmizi */
+            font-size: 0.8em;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            margin-left: 2px;
+        }
+
+        :root {
+            --color-moss: #2F4A3A;
+            --color-cream: #F9F9F4;
+            --color-text: #222222;
+            --font-heading: 'Playfair Display', serif;
+            --font-body: 'Inter', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--color-cream);
+            color: var(--color-text);
+            padding-bottom: 40px;
+        }
+
+        header {
+            background: var(--color-moss);
+            color: #fff;
+            padding: 2rem;
+            text-align: center;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            margin-bottom: 1rem;
+        }
+
+        .logo-text { font-family: var(--font-heading); font-size: 2.5rem; }
+
+        .container { max-width: 800px; margin: 0 auto; padding: 0 1.5rem; }
+
+        .category-title {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+            color: var(--color-moss);
+            margin: 2.5rem 0 1rem;
+            border-bottom: 2px solid var(--color-moss);
+            padding-bottom: 5px;
+        }
+
+        .menu-grid { display: grid; grid-template-columns: 1fr; gap: 0.5rem; }
+
+        .menu-card {
+            background: #fff;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .item-info {
+            display: flex;
+            flex-direction: column;
+            padding-right: 15px;
+        }
+
+        .item-name { font-weight: 600; font-size: 1.1rem; line-height: 1.2; }
+        
+        .item-desc { font-weight: 400; font-size: 0.85rem; color: #777; margin-top: 4px; line-height: 1.4; }
+        
+        .item-price { font-weight: 700; color: var(--color-moss); white-space: nowrap; }
+
+        footer { text-align: center; padding: 2rem; color: #666; font-size: 0.9rem; }
+
+        /* YAPIŞKAN KATEGORİ NAVİGASYONU */
+        .kategori-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(249, 249, 244, 0.95);
+            backdrop-filter: blur(8px);
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0d8;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        }
+        .kategori-nav-ic {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .kategori-nav-ic::-webkit-scrollbar { display: none; }
+        .kat-btn {
+            flex-shrink: 0;
+            padding: 8px 16px;
+            border: 2px solid var(--color-moss);
+            background: transparent;
+            color: var(--color-moss);
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: var(--font-body);
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .kat-btn:hover { background: var(--color-moss); color: white; }
+        .kat-btn.aktif { background: var(--color-moss); color: white; box-shadow: 0 3px 10px rgba(47,74,58,0.3); }
+        section { scroll-margin-top: 65px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 class="logo-text">Ata Cafe</h1>
+    </header>
+
+
+    <!-- YAPIŞKAN KATEGORİ NAVİGASYONU -->
+    <nav class="kategori-nav">
+        <div class="kategori-nav-ic">
+            <button class="kat-btn aktif" onclick="katGit('sicak')">☕ Sıcak İçecekler</button>
+            <button class="kat-btn" onclick="katGit('yiyecek')">🥙 Yiyecekler</button>
+            <button class="kat-btn" onclick="katGit('atistirmalik')">🥜 Atıştırmalıklar</button>
+            <button class="kat-btn" onclick="katGit('soguk')">🧊 Soğuk İçecekler</button>
+            <button class="kat-btn" onclick="katGit('tatli')">🍮 Tatlılar</button>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <section id="sicak">
+            <h2 class="category-title">Sıcak İçecekler</h2>
+            <div class="menu-grid">
+                <div class="menu-card">
+                    <div class="item-info"><span class="item-name">Çay</span></div>
+                    <span class="item-price">₺25</span>
+                </div>
+                
+                <div class="menu-card">
+                    <div class="item-info"><span class="item-name">Fincan Çay</span></div>
+                    <span class="item-price">₺50</span>
+                </div>
+                
+                <div class="menu-card">
+                    <div class="item-info">
+                        <span class="item-name">Oralet Grubu</span>
+                        <span class="item-desc">
+                            (
+                            <span class="alt-urun" data-urun-id="oralet-portakal">Portakal</span>, 
+                            <span class="alt-urun" data-urun-id="oralet-kivi">Kivi</span>, 
+                            <span class="alt-urun" data-urun-id="oralet-tarcin">Tarçın</span>, 
+                            <span class="alt-urun" data-urun-id="oralet-muz">Muz</span>, 
+                            <span class="alt-urun" data-urun-id="oralet-karadut">Karadut</span>, 
+                            <span class="alt-urun" data-urun-id="oralet-nanelimon">Nanelimon</span>, 
+                            <span class="alt-urun" data-urun-id="oralet-kakao">Kakao</span>, 
+                            <span class="alt-urun" data-urun-id="oralet-kusburnu">Kuşburnu</span>
+                            )
+                        </span>
+                    </div>
+                    <span class="item-price">₺25</span>
+                </div>
+                
+                <div class="menu-card">
+                    <div class="item-info">
+                        <span class="item-name">Kahveler</span>
+                        <span class="item-desc">
+                            (
+                            <span class="alt-urun" data-urun-id="turk-kahvesi">Türk Kahvesi</span>, 
+                            <span class="alt-urun" data-urun-id="sutlu-turk-kahvesi">Sütlü Türk Kahvesi</span>, 
+                            <span class="alt-urun" data-urun-id="menengic-kahvesi">Menengiç Kahvesi</span>, 
+                            <span class="alt-urun" data-urun-id="dibek-kahvesi">Dibek Kahvesi</span>, 
+                            <span class="alt-urun" data-urun-id="damla-sakizli-turk-kahvesi">Damla Sakızlı Türk Kahvesi</span>
+                            )
+                        </span>
+                    </div>
+                    <span class="item-price">₺80</span>
+                </div>
+                
+                <div class="menu-card">
+                    <div class="item-info"><span class="item-name">Nescafe / Sütlü Nescafe</span></div>
+                    <span class="item-price">₺100</span>
+                </div>
+                
+                <div class="menu-card">
+                    <div class="item-info"><span class="item-name">Filtre Kahve</span></div>
+                    <span class="item-price">₺120</span>
+                </div>
+                
+                <div class="menu-card">
+                    <div class="item-info">
+                        <span class="item-name">Bitki Çayları</span>
+                        <span class="item-desc">
+                            (
+                            <span class="alt-urun" data-urun-id="ihlamur">Ihlamur</span>, 
+                            <span class="alt-urun" data-urun-id="ada-cayi">Ada Çayı</span>, 
+                            <span class="alt-urun" data-urun-id="yesil-cay">Yeşil Çay</span>
+                            )
+                        </span>
+                    </div>
+                    <span class="item-price">₺120</span>
+                </div>
+                
+                <div class="menu-card">
+                    <div class="item-info"><span class="item-name">Salep</span></div>
+                    <span class="item-price">₺100</span>
+                </div>
+                
+                <div class="menu-card">
+                    <div class="item-info"><span class="item-name">Sıcak Çikolata</span></div>
+                    <span class="item-price">₺100</span>
+                </div>
+                
+                <div class="menu-card">
+                    <div class="item-info"><span class="item-name">Bardak Salep / Nescafe</span></div>
+                    <span class="item-price">₺40</span>
+                </div>
+                
+                <div class="menu-card">
+                    <div class="item-info"><span class="item-name">Sıcak Ballı Süt / Sıcak Süt</span></div>
+                    <span class="item-price">₺100</span>
+                </div>
+            </div>
+        </section>
+
+        <section id="yiyecek">
+            <h2 class="category-title">Yiyecekler</h2>
+            <div class="menu-grid">
+                <div class="menu-card">
+                    <div class="item-info">
+                        <span class="item-name">Tostlar</span>
+                        <span class="item-desc">
+                            (
+                            <span class="alt-urun" data-urun-id="sucuk-kasarli-tost">Sucuk Kaşarlı</span>, 
+                            <span class="alt-urun" data-urun-id="sade-kasarli-tost">Sade Kaşarlı</span>, 
+                            <span class="alt-urun" data-urun-id="sade-sucuklu-tost">Sade Sucuklu</span>
+                            )
+                        </span>
+                    </div>
+                    <span class="item-price">₺120</span>
+                </div>
+                
+                <div class="menu-card">
+                    <div class="item-info">
+                        <span class="item-name">Gözlemeler</span>
+                        <span class="item-desc">
+                            (
+                            <span class="alt-urun" data-urun-id="sucuk-kasarli-gozleme">Sucuk Kaşarlı</span>, 
+                            <span class="alt-urun" data-urun-id="sade-kasarli-gozleme">Sade Kaşarlı</span>, 
+                            <span class="alt-urun" data-urun-id="sade-sucuklu-gozleme">Sade Sucuklu</span>, 
+                            <span class="alt-urun" data-urun-id="sade-patatesli-gozleme">Sade Patatesli</span>, 
+                            <span class="alt-urun" data-urun-id="patates-kasarli-gozleme">Patates Kaşarlı</span>
+                            )
+                        </span>
+                    </div>
+                    <span class="item-price">₺180</span>
+                </div>
+                
+                <div class="menu-card">
+                    <div class="item-info">
+                        <span class="item-name">Gözleme (Full Karışık)</span>
+                        <span class="item-desc">(Patates, Sucuk, Kaşar)</span>
+                    </div>
+                    <span class="item-price">₺200</span>
+                </div>
+                
+                <div class="menu-card">
+                    <div class="item-info"><span class="item-name">Sucuk Ekmek</span></div>
+                    <span class="item-price">₺120</span>
+                </div>
+            </div>
+        </section>
+
+        <section id="tatli">
+            <h2 class="category-title">Tatlılar</h2>
+            <div class="menu-grid">
+                <div class="menu-card">
+                    <div class="item-info"><span class="item-name">Tatlı Çeşitleri</span></div>
+                    <span class="item-price">₺120</span>
+                </div>
+            </div>
+        </section>
+
+        <section id="atistirmalik">
+            <h2 class="category-title">Atıştırmalıklar</h2>
+            <div class="menu-grid">
+                <div class="menu-card">
+                    <div class="item-info"><span class="item-name">Tuzlu Fıstık</span></div>
+                    <span class="item-price">₺90</span>
+                </div>
+                <div class="menu-card">
+                    <div class="item-info"><span class="item-name">Karışık Çerez</span></div>
+                    <span class="item-price">₺120</span>
+                </div>
+                <div class="menu-card">
+                    <div class="item-info"><span class="item-name">Çekirdek (Küçük)</span></div>
+                    <span class="item-price">₺60</span>
+                </div>
+                <div class="menu-card">
+                    <div class="item-info"><span class="item-name">Çekirdek (Büyük)</span></div>
+                    <span class="item-price">₺120</span>
+                </div>
+            </div>
+        </section>
+
+        <section id="soguk">
+            <h2 class="category-title">Soğuk İçecekler</h2>
+            <div class="menu-grid">
+                <div class="menu-card">
+                    <div class="item-info"><span class="item-name">Su</span></div>
+                    <span class="item-price">₺25</span>
+                </div>
+                
+                <div class="menu-card">
+                    <div class="item-info"><span class="item-name">Ice Americano</span></div>
+                    <span class="item-price">₺130</span>
+                </div>
+                
+                <div class="menu-card">
+                    <div class="item-info"><span class="item-name">Ice Latte</span></div>
+                    <span class="item-price">₺130</span>
+                </div>
+                
+                <div class="menu-card">
+                    <div class="item-info"><span class="item-name">Churchill</span></div>
+                    <span class="item-price">₺120</span>
+                </div>
+                
+                <div class="menu-card">
+                    <div class="item-info"><span class="item-name">Kola Turka</span></div>
+                    <span class="item-price">₺90</span>
+                </div>
+                
+                <div class="menu-card">
+                    <div class="item-info"><span class="item-name">Limonata</span></div>
+                    <span class="item-price">₺90</span>
+                </div>
+                
+                <div class="menu-card">
+                    <div class="item-info"><span class="item-name">Uludağ Gazoz</span></div>
+                    <span class="item-price">₺90</span>
+                </div>
+                
+                <div class="menu-card">
+                    <div class="item-info">
+                        <span class="item-name">Meyve Suları</span>
+                        <span class="item-desc">
+                            (
+                            <span class="alt-urun" data-urun-id="visne-suyu">Vişne</span>, 
+                            <span class="alt-urun" data-urun-id="seftali-suyu">Şeftali</span>, 
+                            <span class="alt-urun" data-urun-id="karisik-meyve-suyu">Karışık</span>
+                            )
+                        </span>
+                    </div>
+                    <span class="item-price">₺90</span>
+                </div>
+                
+                <div class="menu-card">
+                    <div class="item-info">
+                        <span class="item-name">Kutu Meyve Suları</span>
+                        <span class="item-desc">
+                            (
+                            <span class="alt-urun" data-urun-id="kutu-visne">Vişne</span>, 
+                            <span class="alt-urun" data-urun-id="kutu-seftali">Şeftali</span>
+                            )
+                        </span>
+                    </div>
+                    <span class="item-price">₺50</span>
+                </div>
+                
+                <div class="menu-card">
+                    <div class="item-info">
+                        <span class="item-name">Sodalar</span>
+                        <span class="item-desc">
+                            (
+                            <span class="alt-urun" data-urun-id="limonlu-soda">Limon</span>, 
+                            <span class="alt-urun" data-urun-id="elmali-soda">Elma</span>, 
+                            <span class="alt-urun" data-urun-id="narli-soda">Nar</span>, 
+                            <span class="alt-urun" data-urun-id="karpuz-cilek-soda">Karpuz Çilek</span>
+                            )
+                        </span>
+                    </div>
+                    <span class="item-price">₺50</span>
+                </div>
+                
+                <div class="menu-card">
+                    <div class="item-info"><span class="item-name">Küçük Ayran</span></div>
+                    <span class="item-price">₺50</span>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Ata Cafe. Afiyet Olsun.</p>
+    </footer>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+    <script>
+        // 1. Firebase Konfigurasyonu
+        const firebaseConfig = {
+            apiKey: "AIzaSyDTCjrPLHb_jedf8B_V2G4kF7uwG5auY7M",
+            authDomain: "ata-cafe.firebaseapp.com",
+            databaseURL: "https://ata-cafe-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "ata-cafe",
+            storageBucket: "ata-cafe.firebasestorage.app",
+            messagingSenderId: "510514380045",
+            appId: "1:510514380045:web:573513fb41577a24e64444"
+        };
+        
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+        const auth = firebase.auth();
+        auth.signInAnonymously().catch(e => console.log('Auth:', e));
+
+        function idOlustur(isim) {
+            return isim.toLowerCase()
+                .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
+                .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+                .replace(/[^a-z0-9]/g, '-');
+        }
+
+        document.querySelectorAll('.menu-card').forEach(kart => {
+            let isim = kart.querySelector('.item-name').innerText;
+            kart.setAttribute('data-urun-id', idOlustur(isim));
+        });
+
+        // 4. Firebase'den Canli Stok Durumunu Dinle
+        db.ref('menuDurum').on('value', (snapshot) => {
+            let durumlar = snapshot.val() || {};
+            
+            // 1. ANA KARTLARI KONTROL ET
+            document.querySelectorAll('.menu-card').forEach(kart => {
+                let urunId = kart.getAttribute('data-urun-id');
+                if(durumlar[urunId] === false) { 
+                    kart.classList.add('tukendi');
+                } else {
+                    kart.classList.remove('tukendi');
+                }
+            });
+
+            // 2. ALT URUNLERI KONTROL ET (Oralet Kivi vb.)
+            document.querySelectorAll('.alt-urun').forEach(span => {
+                let urunId = span.getAttribute('data-urun-id');
+                if(durumlar[urunId] === false) {
+                    span.classList.add('tukendi');
+                } else {
+                    span.classList.remove('tukendi');
+                }
+            });
+        });
+
+        // =============================================
+        // KATEGORİ NAVİGASYONU
+        // =============================================
+        function katGit(id) {
+            document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+            document.querySelectorAll('.kat-btn').forEach(b => b.classList.remove('aktif'));
+            event.target.classList.add('aktif');
+        }
+
+        // Sayfa kaydırılınca aktif kategori otomatik güncellenir
+        const sections = document.querySelectorAll('section[id]');
+        const katBtnler = document.querySelectorAll('.kat-btn');
+        const katSiraMap = { 'sicak': 0, 'yiyecek': 1, 'atistirmalik': 2, 'soguk': 3, 'tatli': 4 };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    let idx = katSiraMap[entry.target.id];
+                    if (idx !== undefined) {
+                        katBtnler.forEach((b, i) => b.classList.toggle('aktif', i === idx));
+                        katBtnler[idx]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    }
+                }
+            });
+        }, { rootMargin: '-20% 0px -70% 0px' });
+
+        sections.forEach(s => observer.observe(s));
+
+        // Firebase'den fiyatları oku ve menüye uygula (anlık)
+        db.ref('ayarlar/fiyatlar').on('value', (snap) => {
+            let fbFiyatlar = snap.val();
+            if (!fbFiyatlar) return;
+            document.querySelectorAll('.menu-card').forEach(kart => {
+                let urunAdi = kart.querySelector('.item-name')?.innerText;
+                if (urunAdi && fbFiyatlar[urunAdi] !== undefined) {
+                    let fiyatEl = kart.querySelector('.item-price');
+                    if (fiyatEl) fiyatEl.innerText = '\u20ba' + fbFiyatlar[urunAdi];
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>
